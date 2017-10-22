@@ -13,7 +13,7 @@ public class Charts extends PApplet{
 		
     }
 	
-	boolean do_graphs = true;
+	boolean do_graphs = false;
 	
 	int xsheet = 900;
 	int ysheet = 900;
@@ -22,7 +22,9 @@ public class Charts extends PApplet{
 	int draw_interval = 50;
 	int GraphPaperSquareSize = xsheet/10;
 	
-	float x,y,z;
+	float x=0,y=0,z=0;
+	
+	int counter=0;
 
 	
 	public void settings(){
@@ -127,23 +129,33 @@ public class Charts extends PApplet{
 		    	darw_graph(y_mag,IMU_values[7],8,0,255,0);
 		    	darw_graph(z_mag,IMU_values[8],9,0,0,255);
 
-		    	//3D model:
-		    	lights();
-		    	pushMatrix();
-		    	translate(130, height/2, 0);
-		    	rotateY(PI/Integer.parseInt(IMU_values[1]));
-		    	//rotateX(-z);
-		    	stroke(255,20,10);
-		    	box(100);
-		    	popMatrix();
-		    	 
-		    	
 		    	
 		    }
 	    	
 		     
 		  }
     	}
+    	//3D model:
+    	background(255);
+    	lights();
+    	pushMatrix();
+    	translate(130, height/2, 0);
+    	z=PI/100;
+    	
+    	//if (counter < 10)
+    	//{
+    		x+=z;
+        	y+=z;
+    		rotateY(x);
+    		rotateX(y);
+    		counter++;
+    	//}
+    	delay(50);
+    	//frameRate(30);
+    	//rotateX(-z);
+    	stroke(255,20,10);
+    	box(100);
+    	popMatrix();
 
 
     }
