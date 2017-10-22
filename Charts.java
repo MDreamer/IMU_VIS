@@ -13,7 +13,7 @@ public class Charts extends PApplet{
 		
     }
 	
-	boolean do_graphs = false;
+	boolean do_graphs = true;
 	
 	int xsheet = 900;
 	int ysheet = 900;
@@ -58,7 +58,8 @@ public class Charts extends PApplet{
 	        while(!client_connected)
 	        {
 		        try {
-		        	client_in = new Client(this, "192.168.1.12", 3360);  // Connect to server on port 80
+		        	client_in = new Client(this, "169.254.24.155", 3360);  // Connect to server on port 3360
+		        	//client_in = new Client(this, "192.168.1.12", 3360);  // Connect to server on port 3360
 		        	client_in.write("test connectivity");
 		        	if (client_in.active())
 		        		client_connected = true;
@@ -115,7 +116,7 @@ public class Charts extends PApplet{
     		  
 		    data = client_in.readString();   // ...then grab it and print it 
 		    String[] IMU_values = split(data, ",");
-		    if(IMU_values.length == 9)
+		    if(IMU_values.length == 12)
 		    {
 		    	background(255);
 
@@ -129,14 +130,37 @@ public class Charts extends PApplet{
 		    	darw_graph(y_mag,IMU_values[7],8,0,255,0);
 		    	darw_graph(z_mag,IMU_values[8],9,0,0,255);
 
+		    	//3D model:
+		    	//background(255);
+		    	lights();
+		    	pushMatrix();
+		    	translate(130, height/2, 0);
+		    	//z=PI/100;
 		    	
+		    	//if (counter < 10)
+		    	//{
+		    	try {
+		    		rotateX(Float.valueOf(IMU_values[9]));
+		    		rotateY(Float.valueOf(IMU_values[10]));
+		    		rotateZ(Float.valueOf(IMU_values[11]));
+				} catch (java.lang.NumberFormatException e) {
+				}
+	    		
+		    	//}
+		    	//delay(50);
+		    	//frameRate(30);
+		    	//rotateX(-z);
+		    	stroke(255,20,10);
+		    	box(100);
+		    	popMatrix();
 		    }
 	    	
 		     
 		  }
     	}
+    	/*
     	//3D model:
-    	background(255);
+    	//background(255);
     	lights();
     	pushMatrix();
     	translate(130, height/2, 0);
@@ -156,7 +180,7 @@ public class Charts extends PApplet{
     	stroke(255,20,10);
     	box(100);
     	popMatrix();
-
+		*/
 
     }
 
