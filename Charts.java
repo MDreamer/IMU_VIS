@@ -1,7 +1,10 @@
 import processing.core.PApplet;
-import processing.core.PFont;
 import processing.net.*;
-import java.net.ConnectException;
+import java.awt.datatransfer.*;
+import java.awt.Toolkit;
+import processing.opengl.*;
+import saito.objloader.*;
+import g4p_controls.*;
 
 public class Charts extends PApplet{
 	public static void main(String[] args) {
@@ -9,6 +12,9 @@ public class Charts extends PApplet{
         // TODO Auto-generated method stub
 		
     }
+	
+	boolean do_graphs = true;
+	
 	int xsheet = 900;
 	int ysheet = 900;
 	int num_graphs = 9;
@@ -16,8 +22,11 @@ public class Charts extends PApplet{
 	int draw_interval = 50;
 	int GraphPaperSquareSize = xsheet/10;
 	
+	float x,y,z;
+
+	
 	public void settings(){
-		size(xsheet,(ysheet+(ysheet/num_graphs)));
+		size(xsheet,(ysheet+(ysheet/num_graphs)),P3D);
     }
 
 	
@@ -38,32 +47,37 @@ public class Charts extends PApplet{
 	String data;
 	
     public void setup(){
-       
-    	boolean client_connected = false;
-        while(!client_connected)
-        {
-	        try {
-	        	client_in = new Client(this, "192.168.1.12", 3360);  // Connect to server on port 80
-	        	client_in.write("test connectivity");
-	        	if (client_in.active())
-	        		client_connected = true;
-	        	else
-	        	{
-	        		client_connected = false;
-	        		delay(1000);	//in order to not hamme the server
-	        	}
-			} catch (Exception e) {
-				
-			}
-        }
-        client_in.write("Requeting IMU data\n");  // Use the HTTP "GET" command to ask for a webpage
-        
+    	x = width/2;
+    	y = height/2;
+    	z = 0;
+    	if (do_graphs)
+    	{
+	    	boolean client_connected = false;
+	        while(!client_connected)
+	        {
+		        try {
+		        	client_in = new Client(this, "192.168.1.12", 3360);  // Connect to server on port 80
+		        	client_in.write("test connectivity");
+		        	if (client_in.active())
+		        		client_connected = true;
+		        	else
+		        	{
+		        		client_connected = false;
+		        		delay(1000);	//in order to not hamme the server
+		        	}
+				} catch (Exception e) {
+					
+				}
+	        }
+	        client_in.write("Requeting IMU data\n");  
+    	}
     }
 
     
     public void darw_graph(int [] graph,String data,int graph_loc, 
     		int color_r,int color_g, int color_b)
     {
+    	data=data.trim();	//trims the newline /n
     	stroke(50,50,50);
     	line(0,(xsheet/num_graphs*(graph_loc+1))-(xsheet/num_graphs),ysheet,(xsheet/num_graphs*(graph_loc+1))-(xsheet/num_graphs));
 		fill(0);
@@ -72,7 +86,7 @@ public class Charts extends PApplet{
     	beginShape();
     	for(int i = 0; i<graph.length;i++)
     	{
-    		vertex(i,(xsheet-draw_interval)-graph[i]);
+    		vertex(i,graph[i]);
     	}
     	endShape();
     	for(int i = 1; i<graph.length;i++)
@@ -81,7 +95,8 @@ public class Charts extends PApplet{
     	}
     	try {
     		graph[graph.length-1]=Integer.parseInt(data);
-    		graph[graph.length-1] = (int)map(graph[graph.length-1],-32767,32768,((xsheet/num_graphs*(graph_loc+1))-(xsheet/num_graphs)*2),(xsheet/num_graphs*(graph_loc+1))-(xsheet/num_graphs));
+    		//graph[graph.length-1] = (int)map(graph[graph.length-1],-32767,32768,((xsheet/num_graphs*(graph_loc+1))-(xsheet/num_graphs)*2),(xsheet/num_graphs*(graph_loc+1))-(xsheet/num_graphs));
+    		graph[graph.length-1] = (int)map(graph[graph.length-1],-32767,32768,((xsheet/num_graphs*(graph_loc+1))-(xsheet/num_graphs)),(xsheet/num_graphs*(graph_loc+1))-(xsheet/num_graphs*2));
 			
 		} catch (java.lang.NumberFormatException e) {
 			graph[graph.length-1]=0;
@@ -90,8 +105,10 @@ public class Charts extends PApplet{
     }
     
     public void draw()
-    {	
-    	//if (client_in.active())	//check that the client is connected
+    {
+    	//Graphs
+    	if (do_graphs)
+    	{
     	if (client_in.available() > 0) {    // If there's incoming data from the client...
     		  
 		    data = client_in.readString();   // ...then grab it and print it 
@@ -99,18 +116,7 @@ public class Charts extends PApplet{
 		    if(IMU_values.length == 9)
 		    {
 		    	background(255);
-		    	//GraphPaper
-		    	/*
-		    	for(int i = 0 ;i<=width/GraphPaperSquareSize;i++)
-		    	{
-		    		int moment = second();
-		    		stroke(200);
-		    		line((-frameCount%10)+i*GraphPaperSquareSize,0,(-frameCount%10)+i*GraphPaperSquareSize,height);
-		    		fill(0);
-		    		line(0, i*GraphPaperSquareSize,width,i*GraphPaperSquareSize);
-		    		//
-		    	}
-		    	*/
+
 		    	darw_graph(x_gyr,IMU_values[0],1,255,0,0);
 		    	darw_graph(y_gyr,IMU_values[1],2,0,255,0);
 		    	darw_graph(z_gyr,IMU_values[2],3,0,0,255);
@@ -120,35 +126,26 @@ public class Charts extends PApplet{
 		    	darw_graph(x_mag,IMU_values[6],7,0,0,0);
 		    	darw_graph(y_mag,IMU_values[7],8,0,255,0);
 		    	darw_graph(z_mag,IMU_values[8],9,0,0,255);
-		    	/*
-		    	noFill();
-		    	stroke(255,0,0);
-		    	beginShape();
-		    	for(int i = 0; i<x_gyr.length;i++)
-		    	{
-		    		vertex(i,(xsheet-draw_interval)-x_gyr[i]);
-		    	}
-		    	endShape();
-		    	for(int i = 1; i<x_gyr.length;i++)
-		    	{
-		    		x_gyr[i-1] = x_gyr[i];
-		    	}
-		    	try {
-		    		x_gyr[x_gyr.length-1]=Integer.parseInt(IMU_values[1]);
-		    		x_gyr[x_gyr.length-1] = (int)map(x_gyr[x_gyr.length-1],-32767,32768,0,xsheet/num_graphs/2);
-					
-				} catch (java.lang.NumberFormatException e) {
-					x_gyr[x_gyr.length-1]=0;
-				}
-		    	*/
+
+		    	//3D model:
+		    	lights();
+		    	pushMatrix();
+		    	translate(130, height/2, 0);
+		    	rotateY(PI/Integer.parseInt(IMU_values[1]));
+		    	//rotateX(-z);
+		    	stroke(255,20,10);
+		    	box(100);
+		    	popMatrix();
+		    	 
 		    	
 		    	
 		    }
 	    	
 		     
-		  }  
-    	
-    	
+		  }
+    	}
+
+
     }
 
 }
