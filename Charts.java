@@ -26,9 +26,9 @@ public class Charts extends PApplet{
 	
 	int counter=0;
 
-	
+	OBJModel model;
 	public void settings(){
-		size(xsheet,(ysheet+(ysheet/num_graphs)),P3D);
+		size(xsheet,ysheet,P3D);
     }
 
 	
@@ -49,6 +49,10 @@ public class Charts extends PApplet{
 	String data;
 	
     public void setup(){
+    	model = new OBJModel(this);
+    	model.load("Dump_Truck.obj");
+    	model.scale(1);
+    	  
     	x = width/2;
     	y = height/2;
     	z = 0;
@@ -58,8 +62,8 @@ public class Charts extends PApplet{
 	        while(!client_connected)
 	        {
 		        try {
-		        	client_in = new Client(this, "169.254.24.155", 3360);  // Connect to server on port 3360
-		        	//client_in = new Client(this, "192.168.1.12", 3360);  // Connect to server on port 3360
+		        	//client_in = new Client(this, "169.254.24.155", 3360);  // Connect to server on port 3360
+		        	client_in = new Client(this, "192.168.1.12", 3360);  // Connect to server on port 3360
 		        	client_in.write("test connectivity");
 		        	if (client_in.active())
 		        		client_connected = true;
@@ -118,7 +122,8 @@ public class Charts extends PApplet{
 		    String[] IMU_values = split(data, ",");
 		    if(IMU_values.length == 12)
 		    {
-		    	background(255);
+		    	
+		    	background(32);
 
 		    	darw_graph(x_gyr,IMU_values[0],1,255,0,0);
 		    	darw_graph(y_gyr,IMU_values[1],2,0,255,0);
@@ -126,11 +131,49 @@ public class Charts extends PApplet{
 		    	darw_graph(x_acc,IMU_values[3],4,125,125,0);
 		    	darw_graph(y_acc,IMU_values[4],5,0,125,125);
 		    	darw_graph(z_acc,IMU_values[5],6,125,0,125);
-		    	darw_graph(x_mag,IMU_values[6],7,0,0,0);
+		    	darw_graph(x_mag,IMU_values[6],7,255,225,255);
 		    	darw_graph(y_mag,IMU_values[7],8,0,255,0);
 		    	darw_graph(z_mag,IMU_values[8],9,0,0,255);
 
 		    	//3D model:
+		    	// Set a new co-ordinate space
+		    	//background(0,0,0);
+		    	pushMatrix();
+				
+				// Simple 3 point lighting for dramatic effect.
+				// Slightly red light in upper right, slightly blue light in upper left, and white light from behind.
+				pointLight(255, 200, 200,  400, 400,  500);
+				pointLight(200, 200, 255, -400, 400,  500);
+				pointLight(255, 255, 255,    0,   0, -500);
+				  
+				// Move bunny from 0,0 in upper left corner to roughly center of screen.
+				translate(xsheet/3, ysheet/2, 0);
+				  
+				// Rotate shapes around the X/Y/Z axis (values in radians, 0..Pi*2)
+				rotateX(Float.valueOf(IMU_values[9]));
+				rotateY(Float.valueOf(IMU_values[10])); // extrinsic rotation
+				rotateZ(Float.valueOf(IMU_values[11]));
+				/*
+				float c1 = cos(radians(roll));
+				float s1 = sin(radians(roll));
+				float c2 = cos(radians(pitch)); // intrinsic rotation
+				float s2 = sin(radians(pitch));
+				float c3 = cos(radians(yaw));
+				float s3 = sin(radians(yaw));
+				
+				applyMatrix( c2*c3, s1*s3+c1*c3*s2, c3*s1*s2-c1*s3, 0,
+				-s2, c1*c2, c2*s1, 0,
+				c2*s3, c1*s2*s3-c3*s1, c1*c3+s1*s2*s3, 0,
+				0, 0, 0, 1);
+				*/
+				pushMatrix();
+				noStroke();
+				model.draw();
+				popMatrix();
+				popMatrix();
+		    	
+		    	
+		    	/* BOX model
 		    	//background(255);
 		    	lights();
 		    	pushMatrix();
@@ -153,6 +196,7 @@ public class Charts extends PApplet{
 		    	stroke(255,20,10);
 		    	box(100);
 		    	popMatrix();
+		    	*/
 		    }
 	    	
 		     
