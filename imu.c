@@ -45,6 +45,9 @@ void print_calibrated_accel(mpudata_t *mpu);
 void print_calibrated_mag(mpudata_t *mpu);
 void print_to_socket(mpudata_t *mpu);
 void print_raws(mpudata_t *mpu);
+void QuaternionFromIMU(float ax, float ay, float az, float gx, float gy, float gz, float mx, float my, float mz);
+void print_quaternions(mpudata_t *mpu);
+
 void register_sig_handler();
 void sigint_handler(int sig);
 
@@ -86,13 +89,13 @@ int print_socket = 0;
 
 //Quaternions
 const float PI = 3.14159265358979323846f;
-float q[4] = {1.0f, 0.0f, 0.0f, 0.0f};
+volatile float q[4] = {1.0f, 0.0f, 0.0f, 0.0f};
 float deltat = 0.0f;
 
 //resolution configurations
-int res_gyro = 0;
-int res_acc = 32768;
-int res_mag = 4096;
+float res_gyro = 131;
+float res_acc = 16384;
+float res_mag = 0.3;
 
 
 int main(int argc, char **argv)
@@ -263,19 +266,18 @@ void read_loop(unsigned int sample_rate)
 	}
 	printf("Closing socket\n\n");
 }
+
 void print_quaternions(mpudata_t *mpu)
 {
-
-
-	float ax = mpu->rawAccel[0];
-	float ay = mpu->rawAccel[1];
-	float az = mpu->rawAccel[2];
-	float gx = mpu->rawGyro[0];
-	float gy = mpu->rawGyro[1];
-	float gz = mpu->rawGyro[2];
-	float mx = mpu->rawMag[0];
-	float my = mpu->rawMag[1];
-	float mz = mpu->rawMag[2];
+	float ax = ((float)mpu->rawAccel[0]/res_acc);
+	float ay = ((float)mpu->rawAccel[1]/res_acc);
+	float az = ((float)mpu->rawAccel[2]/res_acc);
+	float gx = ((float)mpu->rawGyro[0]/res_gyro*PI/180.0f);
+	float gy = ((float)mpu->rawGyro[1]/res_gyro*PI/180.0f);
+	float gz = ((float)mpu->rawGyro[2]/res_gyro*PI/180.0f);
+	float mx = ((float)mpu->rawMag[0]/res_mag);
+	float my = ((float)mpu->rawMag[1]/res_mag);
+	float mz = ((float)mpu->rawMag[2]/res_mag);
 
 	QuaternionFromIMU(ax,ay,az,gx,gy,gz,mx,my,mz);
 	printf("QuaternionFromIMU: %.6f,%.6f,%.6f,%.6f\n",q[0],q[1],q[2],q[3]);
@@ -476,7 +478,7 @@ void sigint_handler(int sig)
 
 void QuaternionFromIMU(float ax, float ay, float az, float gx, float gy, float gz, float mx, float my, float mz)
 {
-	const float GyroMeasError = PI * (60.0f / 180.0f);
+	float GyroMeasError = PI * (60.0f / 180.0f);
 	float beta = sqrt(3.0f / 4.0f) * GyroMeasError;  // compute beta
 
     float q1 = q[0], q2 = q[1], q3 = q[2], q4 = q[3];
